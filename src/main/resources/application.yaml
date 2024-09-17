@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: kotlin-project-marketplace
+
+server:
+  port: 8082
