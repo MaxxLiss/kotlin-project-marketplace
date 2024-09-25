@@ -2,5 +2,14 @@ spring:
   application:
     name: kotlin-project-marketplace
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/kotlin_project_marketplace_db
+    name: postgres
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
 server:
   port: 8082
