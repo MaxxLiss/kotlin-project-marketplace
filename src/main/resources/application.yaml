@@ -7,5 +7,9 @@ spring:
     name: postgres
     password: password
 
+  jpa:
+    hibernate:
+      ddl-auto: none
+
 server:
   port: 8082
