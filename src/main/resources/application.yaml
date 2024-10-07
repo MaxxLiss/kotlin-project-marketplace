@@ -3,13 +3,17 @@ spring:
     name: kotlin-project-marketplace
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/kotlin_project_marketplace_db
-    name: postgres
+    url: jdbc:postgresql://localhost:5438/kotlin_project_marketplace_db
+    username: admin
     password: password
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
+      naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8082
