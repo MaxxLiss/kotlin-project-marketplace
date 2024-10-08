@@ -5,16 +5,16 @@ import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
-import org.example.kotlinprojectmarketplace.exception.auth.DuplicateLoginException
-import org.example.kotlinprojectmarketplace.exception.auth.WrongCredentialsException
+import org.example.kotlinprojectmarketplace.exception.AuthException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import java.util.*
 
 @ExtendWith(MockitoExtension::class)
 class AuthServiceImplTest {
@@ -31,39 +31,43 @@ class AuthServiceImplTest {
     @Test
     fun testSuccessRegister() {
         val authRequest = AuthRequest("test", "test")
+
         `when`(userDetailsRepository
-            .findByLogin("test"))
-            .thenReturn(null)
+            .findByLogin(authRequest.login))
+            .thenReturn(Optional.empty())
 
-        val result = authService.register(authRequest)
+        authService.register(authRequest)
 
-        assertEquals(result, AuthResponse(AuthResponseMessage.SUCCESS_REGISTRATION))
+        verify(userDetailsRepository).findByLogin(authRequest.login)
     }
 
     @Test
     fun testRegisterDuplicateLoginException() {
         val authRequest = AuthRequest("test", "test")
-        val userDetails = UserDetails(1, "test", passwordEncoder.encode("test"))
+        val userDetails = UserDetails(1, authRequest.password, passwordEncoder.encode(authRequest.password))
 
         `when`(userDetailsRepository
-            .findByLogin("test"))
-            .thenReturn(userDetails)
+            .findByLogin(authRequest.login))
+            .thenReturn(Optional.of(userDetails))
 
-        assertThrows(DuplicateLoginException::class.java) { authService.register(authRequest) }
+        assertThrows(AuthException::class.java) { authService.register(authRequest) }
+
+        verify(userDetailsRepository).findByLogin(authRequest.login)
+
     }
 
     @Test
     fun testSuccessLogin() {
         val authRequest = AuthRequest("test", "test")
-        val userDetails = UserDetails(1, "test", passwordEncoder.encode("test"))
+        val userDetails = UserDetails(1, authRequest.login, passwordEncoder.encode(authRequest.password))
 
         `when`(userDetailsRepository
-            .findByLogin("test"))
-            .thenReturn(userDetails)
+            .findByLogin(authRequest.login))
+            .thenReturn(Optional.of(userDetails))
 
-        val result = authService.login(authRequest)
+        authService.login(authRequest)
 
-        assertEquals(result, AuthResponse(AuthResponseMessage.SUCCESS_LOGIN))
+        verify(userDetailsRepository).findByLogin(authRequest.login)
     }
 
     @Test
@@ -73,15 +77,18 @@ class AuthServiceImplTest {
         val userDetails = UserDetails(1, "test", passwordEncoder.encode("test"))
 
         `when`(userDetailsRepository
-            .findByLogin("wrong"))
-            .thenReturn(null)
+            .findByLogin(wrongLoginAuthRequest.login))
+            .thenReturn(Optional.empty())
 
         `when`(userDetailsRepository
-            .findByLogin("test"))
-            .thenReturn(userDetails)
+            .findByLogin(wrongPasswordAuthRequest.login))
+            .thenReturn(Optional.of(userDetails))
 
-        assertThrows(WrongCredentialsException::class.java) { authService.login(wrongLoginAuthRequest) }
+        assertThrows(AuthException::class.java) { authService.login(wrongLoginAuthRequest) }
 
-        assertThrows(WrongCredentialsException::class.java) { authService.login(wrongPasswordAuthRequest) }
+        assertThrows(AuthException::class.java) { authService.login(wrongPasswordAuthRequest) }
+
+        verify(userDetailsRepository).findByLogin(wrongLoginAuthRequest.login)
+        verify(userDetailsRepository).findByLogin(wrongPasswordAuthRequest.login)
     }
 }

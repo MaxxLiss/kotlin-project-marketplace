@@ -5,9 +5,8 @@ import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
-import org.example.kotlinprojectmarketplace.exception.auth.AuthException
-import org.example.kotlinprojectmarketplace.exception.auth.DuplicateLoginException
-import org.example.kotlinprojectmarketplace.exception.auth.WrongCredentialsException
+import org.example.kotlinprojectmarketplace.exception.AuthException
+import org.example.kotlinprojectmarketplace.exception.AuthExceptionMessage
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
@@ -21,10 +20,9 @@ class AuthServiceImpl(
 
     private val passwordEncoder = BCryptPasswordEncoder()
 
-    @Throws(AuthException::class)
-    override fun register(authRequest: AuthRequest): AuthResponse {
-        if (userDetailsRepository.findByLogin(authRequest.login) != null) {
-            throw DuplicateLoginException()
+    override fun register(authRequest: AuthRequest) {
+        if (userDetailsRepository.findByLogin(authRequest.login).isPresent) {
+            throw AuthException(AuthExceptionMessage.DUPLICATED_LOGIN.text)
         }
 
         val userDetails = UserDetails(
@@ -32,17 +30,15 @@ class AuthServiceImpl(
             password = passwordEncoder.encode(authRequest.password)
         )
         userDetailsRepository.save(userDetails)
-
-        return AuthResponse(AuthResponseMessage.SUCCESS_REGISTRATION)
     }
 
-    @Throws(AuthException::class)
-    override fun login(authRequest: AuthRequest): AuthResponse {
-        val userDetails = userDetailsRepository.findByLogin(authRequest.login) ?: throw WrongCredentialsException()
-        if (!passwordEncoder.matches(authRequest.password, userDetails.password)) {
-            throw WrongCredentialsException()
+    override fun login(authRequest: AuthRequest) {
+        val userDetails = with(userDetailsRepository.findByLogin(authRequest.login)) {
+            if (this.isEmpty) throw AuthException(AuthExceptionMessage.WRONG_CREDENTIALS.text)
+            this.get()
         }
-
-        return AuthResponse(AuthResponseMessage.SUCCESS_LOGIN)
+        if (!passwordEncoder.matches(authRequest.password, userDetails.password)) {
+            throw AuthException(AuthExceptionMessage.WRONG_CREDENTIALS.text)
+        }
     }
 }
