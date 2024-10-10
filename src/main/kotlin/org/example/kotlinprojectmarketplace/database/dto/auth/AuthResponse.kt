@@ -4,7 +4,7 @@ data class AuthResponse(
     val message: String,
 )
 
-enum class AuthResponseMessage(val text: String) {
-    SUCCESS_REGISTRATION("Successfully registered"),
-    SUCCESS_LOGIN("Successfully logged in"),
+object AuthResponseMessage {
+    const val SUCCESS_REGISTRATION = "Successfully registered"
+    const val SUCCESS_LOGIN = "Successfully logged in"
 }

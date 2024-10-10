@@ -1,42 +1,22 @@
 package org.example.kotlinprojectmarketplace.integration
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
-import org.example.kotlinprojectmarketplace.exception.auth.DuplicateLoginException
-import org.example.kotlinprojectmarketplace.exception.auth.WrongCredentialsException
+import org.example.kotlinprojectmarketplace.exception.AuthExceptionMessage
+import org.hamcrest.CoreMatchers.equalTo
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.times
-import org.mockito.Mockito.verify
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
-import org.springframework.boot.test.context.SpringBootTest
+import org.mockito.Mockito.*
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.MediaType
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
-@Transactional
-@AutoConfigureMockMvc
-@SpringBootTest
-class AuthIntegrationTest {
-    @Autowired
-    private lateinit var mockMvc: MockMvc
-
+class AuthIntegrationTest : AbstractIntegrationTest() {
     @SpyBean
     private lateinit var userDetailsRepository: UserDetailsRepository
-
-    private val objectMapper = ObjectMapper()
-
-    private val passwordEncoder = BCryptPasswordEncoder()
 
     @Test
     fun testSuccessRegister() {
@@ -50,25 +30,20 @@ class AuthIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(authRequest))
         )
-            .andExpect(status().isOk)
-            .andExpect(content().string(AuthResponseMessage.SUCCESS_REGISTRATION.text))
+            .andExpect(status().isCreated)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthResponseMessage.SUCCESS_REGISTRATION)))
 
         verify(userDetailsRepository).findByLogin(authRequest.login)
+        verify(userDetailsRepository).save(any(UserDetails::class.java))
 
-        val userDetails = UserDetails(
-            login = authRequest.login,
-            password = authRequest.password
-        )
-        // todo проверить, что вызывается save()
-        // возможно, получится сделать save(Any), но кажется, что можно лучше
-//        verify(userDetailsRepository).save(userDetails)
+        val userDetailsResult = userDetailsRepository.findByLogin(authRequest.login).let {
+            assert(it.isPresent)
+            it.get()
+        }
 
-        val userDetailsResult = userDetailsRepository.findByLogin(authRequest.login)
-
-        assertNotNull(userDetailsResult)
-
-        assertEquals(userDetails.login, userDetailsResult?.login)
-        assert(passwordEncoder.matches(userDetails.password, userDetailsResult?.password))
+        assertEquals(authRequest.login, userDetailsResult.login)
+        assert(passwordEncoder.matches(authRequest.password, userDetailsResult.password))
     }
 
     @Test
@@ -80,30 +55,23 @@ class AuthIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(authRequest))
         )
-            .andExpect(status().isOk)
-            .andExpect(content().string(AuthResponseMessage.SUCCESS_REGISTRATION.text))
+            .andExpect(status().isCreated)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthResponseMessage.SUCCESS_REGISTRATION)))
 
-        verify(userDetailsRepository).findByLogin(authRequest.login)
+        assert(userDetailsRepository.findByLogin(authRequest.login).isPresent)
 
         mockMvc.perform(
             post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(authRequest))
         )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(DuplicateLoginException().message))
+            .andExpect(status().isConflict)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthExceptionMessage.DUPLICATED_LOGIN)))
 
-        val userDetails = UserDetails(
-            login = authRequest.login,
-            password = authRequest.password
-        )
-
-        val userDetailsResult = userDetailsRepository.findByLogin(authRequest.login)
-
-        assertNotNull(userDetailsResult)
-
-        assertEquals(userDetails.login, userDetailsResult?.login)
-        assert(passwordEncoder.matches(userDetails.password, userDetailsResult?.password))
+        verify(userDetailsRepository, times(3)).findByLogin(authRequest.login)
+        verify(userDetailsRepository).save(any(UserDetails::class.java))
     }
 
     @Test
@@ -115,8 +83,12 @@ class AuthIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(authRequest))
         )
-            .andExpect(status().isOk)
-            .andExpect(content().string(AuthResponseMessage.SUCCESS_REGISTRATION.text))
+            .andExpect(status().isCreated)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthResponseMessage.SUCCESS_REGISTRATION)))
+
+        verify(userDetailsRepository).save(any(UserDetails::class.java))
+        assert(userDetailsRepository.findByLogin(authRequest.login).isPresent)
 
         mockMvc.perform(
             post("/api/auth/login")
@@ -124,25 +96,22 @@ class AuthIntegrationTest {
                 .content(objectMapper.writeValueAsString(authRequest))
         )
             .andExpect(status().isOk)
-            .andExpect(content().string(AuthResponseMessage.SUCCESS_LOGIN.text))
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthResponseMessage.SUCCESS_LOGIN)))
 
-        verify(userDetailsRepository, times(2)).findByLogin(authRequest.login)
+        verify(userDetailsRepository, times(3)).findByLogin(authRequest.login)
 
-        val userDetails = UserDetails(
-            login = authRequest.login,
-            password = authRequest.password
-        )
+        val userDetailsResult = userDetailsRepository.findByLogin(authRequest.login).let {
+            assert(it.isPresent)
+            it.get()
+        }
 
-        val userDetailsResult = userDetailsRepository.findByLogin(authRequest.login)
-
-        assertNotNull(userDetailsResult)
-
-        assertEquals(userDetails.login, userDetailsResult?.login)
-        assert(passwordEncoder.matches(userDetails.password, userDetailsResult?.password))
+        assertEquals(authRequest.login, userDetailsResult.login)
+        assert(passwordEncoder.matches(authRequest.password, userDetailsResult.password))
     }
 
     @Test
-    fun testWrongCredentialsExLogin() {
+    fun testInvalidCredentialsExLogin() {
         val successAuthRequest = AuthRequest("test", "test")
 
         mockMvc.perform(
@@ -150,8 +119,12 @@ class AuthIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(successAuthRequest))
         )
-            .andExpect(status().isOk)
-            .andExpect(content().string(AuthResponseMessage.SUCCESS_REGISTRATION.text))
+            .andExpect(status().isCreated)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthResponseMessage.SUCCESS_REGISTRATION)))
+
+        verify(userDetailsRepository).save(any(UserDetails::class.java))
+        assert(userDetailsRepository.findByLogin(successAuthRequest.login).isPresent)
 
         val wrongLoginAuthRequest = AuthRequest("wrong", "test")
         val wrongPasswordAuthRequest = AuthRequest("test", "wrong")
@@ -161,30 +134,28 @@ class AuthIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(wrongLoginAuthRequest))
         )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(WrongCredentialsException().message))
+            .andExpect(status().isUnauthorized)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthExceptionMessage.INVALID_CREDENTIALS)))
 
         mockMvc.perform(
             post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(wrongPasswordAuthRequest))
         )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().string(WrongCredentialsException().message))
+            .andExpect(status().isUnauthorized)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.message", equalTo(AuthExceptionMessage.INVALID_CREDENTIALS)))
 
-        verify(userDetailsRepository, times(2)).findByLogin(successAuthRequest.login)
+        verify(userDetailsRepository, times(3)).findByLogin(successAuthRequest.login)
         verify(userDetailsRepository).findByLogin(wrongLoginAuthRequest.login)
 
-        val userDetails = UserDetails(
-            login = successAuthRequest.login,
-            password = successAuthRequest.password
-        )
+        val userDetailsResult = userDetailsRepository.findByLogin(successAuthRequest.login).let {
+            assert(it.isPresent)
+            it.get()
+        }
 
-        val userDetailsResult = userDetailsRepository.findByLogin(successAuthRequest.login)
-
-        assertNotNull(userDetailsResult)
-
-        assertEquals(userDetails.login, userDetailsResult?.login)
-        assert(passwordEncoder.matches(userDetails.password, userDetailsResult?.password))
+        assertEquals(successAuthRequest.login, userDetailsResult.login)
+        assert(passwordEncoder.matches(successAuthRequest.password, userDetailsResult.password))
     }
 }

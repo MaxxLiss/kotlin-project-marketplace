@@ -1,10 +1,15 @@
 package org.example.kotlinprojectmarketplace.exception
 
-class AuthException(
-    override val message: String = "Something went wrong during the authentication",
-) : AppException()
+import org.springframework.http.HttpStatus
+import java.time.LocalDateTime
 
-enum class AuthExceptionMessage(val text: String) {
-    DUPLICATED_LOGIN("Duplicated login"),
-    WRONG_CREDENTIALS("Wrong credentials"),
+class AuthException(
+    message: String = "Something went wrong during the authentication",
+    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
+    happenedAt: LocalDateTime = LocalDateTime.now(),
+) : ApiException(message, statusCode, happenedAt)
+
+object AuthExceptionMessage {
+    const val DUPLICATED_LOGIN = "Duplicated login"
+    const val INVALID_CREDENTIALS = "Invalid credentials"
 }

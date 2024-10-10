@@ -1,8 +1,6 @@
 package org.example.kotlinprojectmarketplace.service
 
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
 import org.example.kotlinprojectmarketplace.exception.AuthException
@@ -39,6 +37,7 @@ class AuthServiceImplTest {
         authService.register(authRequest)
 
         verify(userDetailsRepository).findByLogin(authRequest.login)
+        verify(userDetailsRepository).save(any(UserDetails::class.java))
     }
 
     @Test
@@ -53,7 +52,7 @@ class AuthServiceImplTest {
         assertThrows(AuthException::class.java) { authService.register(authRequest) }
 
         verify(userDetailsRepository).findByLogin(authRequest.login)
-
+        verify(userDetailsRepository, never()).save(any(UserDetails::class.java))
     }
 
     @Test
@@ -71,7 +70,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    fun testLoginWrongCredentialsException() {
+    fun testLoginInvalidCredentialsException() {
         val wrongLoginAuthRequest = AuthRequest("wrong", "test")
         val wrongPasswordAuthRequest = AuthRequest("test", "wrong")
         val userDetails = UserDetails(1, "test", passwordEncoder.encode("test"))

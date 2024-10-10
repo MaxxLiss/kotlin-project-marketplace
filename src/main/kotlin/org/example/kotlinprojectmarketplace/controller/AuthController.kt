@@ -6,30 +6,30 @@ import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessag
 import org.example.kotlinprojectmarketplace.service.AuthService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/auth")
-class AuthController {
+class AuthController(
     @Autowired
-    private lateinit var authService: AuthService
-
-    // todo нормальный Response. Возможно, надо переработать AuthResponse
+    private val authService: AuthService,
+) {
     @PostMapping("/register")
-    fun register(@RequestBody authRequest: AuthRequest): ResponseEntity<String> = try {
+    fun register(@RequestBody authRequest: AuthRequest) : ResponseEntity<AuthResponse> {
         authService.register(authRequest)
-        ResponseEntity.ok(AuthResponseMessage.SUCCESS_REGISTRATION.text)
-    } catch (ex: Exception) {
-        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.message)
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(AuthResponse(AuthResponseMessage.SUCCESS_REGISTRATION))
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody authRequest: AuthRequest): ResponseEntity<String> = try {
+    fun login(@RequestBody authRequest: AuthRequest): ResponseEntity<AuthResponse> {
         authService.login(authRequest)
-        ResponseEntity.ok(AuthResponseMessage.SUCCESS_LOGIN.text)
-    } catch (ex: Exception) {
-        ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.message)
+        return ResponseEntity.status(HttpStatus.OK)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(AuthResponse(AuthResponseMessage.SUCCESS_LOGIN))
     }
-
 }

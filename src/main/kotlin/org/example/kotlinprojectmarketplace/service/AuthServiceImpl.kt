@@ -1,16 +1,14 @@
 package org.example.kotlinprojectmarketplace.service
 
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
 import org.example.kotlinprojectmarketplace.exception.AuthException
 import org.example.kotlinprojectmarketplace.exception.AuthExceptionMessage
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
-import kotlin.jvm.Throws
 
 @Service
 class AuthServiceImpl(
@@ -22,7 +20,7 @@ class AuthServiceImpl(
 
     override fun register(authRequest: AuthRequest) {
         if (userDetailsRepository.findByLogin(authRequest.login).isPresent) {
-            throw AuthException(AuthExceptionMessage.DUPLICATED_LOGIN.text)
+            throw AuthException(AuthExceptionMessage.DUPLICATED_LOGIN, HttpStatus.CONFLICT)
         }
 
         val userDetails = UserDetails(
@@ -33,12 +31,12 @@ class AuthServiceImpl(
     }
 
     override fun login(authRequest: AuthRequest) {
-        val userDetails = with(userDetailsRepository.findByLogin(authRequest.login)) {
-            if (this.isEmpty) throw AuthException(AuthExceptionMessage.WRONG_CREDENTIALS.text)
-            this.get()
+        val userDetails = userDetailsRepository.findByLogin(authRequest.login).let {
+            if (it.isEmpty) throw AuthException(AuthExceptionMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED)
+            it.get()
         }
         if (!passwordEncoder.matches(authRequest.password, userDetails.password)) {
-            throw AuthException(AuthExceptionMessage.WRONG_CREDENTIALS.text)
+            throw AuthException(AuthExceptionMessage.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED)
         }
     }
 }
