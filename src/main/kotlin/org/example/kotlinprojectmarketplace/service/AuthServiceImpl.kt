@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service
 @Service
 class AuthServiceImpl(
     @Autowired
-    private val userDetailsRepository: UserDetailsRepository
+    private val userDetailsRepository: UserDetailsRepository,
+
+    @Autowired
+    private val passwordEncoder: BCryptPasswordEncoder
 ) : AuthService {
-
-    private val passwordEncoder = BCryptPasswordEncoder()
-
     override fun register(authRequest: AuthRequest) {
         if (userDetailsRepository.findByLogin(authRequest.login).isPresent) {
             throw AuthException(AuthExceptionMessage.DUPLICATED_LOGIN, HttpStatus.CONFLICT)
