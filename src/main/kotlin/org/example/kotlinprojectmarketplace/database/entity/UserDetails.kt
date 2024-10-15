@@ -1,6 +1,7 @@
 package org.example.kotlinprojectmarketplace.database.entity
 
 import jakarta.persistence.*
+import org.springframework.security.core.GrantedAuthority
 import java.time.LocalDateTime
 
 @Entity
@@ -24,4 +25,14 @@ data class UserDetails (
 
     @Column(name = "admin", nullable = false)
     val admin: Boolean = false,
-)
+) {
+    fun getAuthorities(): MutableSet<GrantedAuthority> = mutableSetOf<GrantedAuthority>(Role.USER).apply {
+        if (seller) add(Role.SELLER)
+        if (admin) add(Role.ADMIN)
+    }
+}
+
+enum class Role: GrantedAuthority {
+    USER, SELLER, ADMIN;
+    override fun getAuthority(): String = name
+}

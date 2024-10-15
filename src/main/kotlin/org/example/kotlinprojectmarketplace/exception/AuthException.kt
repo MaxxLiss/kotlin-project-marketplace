@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 class AuthException(
     message: String = "Something went wrong during the authentication",
-    statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
+    statusCode: HttpStatus = HttpStatus.UNAUTHORIZED,
     happenedAt: LocalDateTime = LocalDateTime.now(),
 ) : ApiException(message, statusCode, happenedAt)
 

@@ -1,6 +1,7 @@
 package org.example.kotlinprojectmarketplace.database.dto.auth
 
 data class AuthResponse(
+    val jwtToken: String,
     val message: String,
 )
 

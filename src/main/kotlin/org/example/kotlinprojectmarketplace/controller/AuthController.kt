@@ -2,7 +2,6 @@ package org.example.kotlinprojectmarketplace.controller
 
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
 import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.service.AuthService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -17,19 +16,18 @@ class AuthController(
     private val authService: AuthService,
 ) {
     @PostMapping("/register")
-    fun register(@RequestBody authRequest: AuthRequest) : ResponseEntity<AuthResponse> {
-        authService.register(authRequest)
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(AuthResponse(AuthResponseMessage.SUCCESS_REGISTRATION))
-    }
+    fun register(
+        @RequestBody authRequest: AuthRequest
+    ) : ResponseEntity<AuthResponse> = ResponseEntity
+        .status(HttpStatus.CREATED)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(authService.register(authRequest))
 
     @PostMapping("/login")
-    fun login(@RequestBody authRequest: AuthRequest): ResponseEntity<AuthResponse> {
-        authService.login(authRequest)
-        return ResponseEntity.status(HttpStatus.OK)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(AuthResponse(AuthResponseMessage.SUCCESS_LOGIN))
-    }
+    fun login(
+        @RequestBody authRequest: AuthRequest
+    ): ResponseEntity<AuthResponse> = ResponseEntity
+        .status(HttpStatus.OK)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(authService.login(authRequest))
 }
