@@ -1,9 +1,8 @@
 package org.example.kotlinprojectmarketplace.service
 
-import org.example.kotlinprojectmarketplace.config.JwtProperties
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponseMessage
+import org.example.kotlinprojectmarketplace.database.dto.AuthRequest
+import org.example.kotlinprojectmarketplace.database.dto.AuthResponse
+import org.example.kotlinprojectmarketplace.database.dto.AuthResponseMessage
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
 import org.example.kotlinprojectmarketplace.exception.AuthException
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class AuthServiceImpl(
@@ -22,8 +20,6 @@ class AuthServiceImpl(
     private val passwordEncoder: BCryptPasswordEncoder,
     @Autowired
     private val jwtService: JwtService,
-    @Autowired
-    private val jwtProperties: JwtProperties,
 ) : AuthService {
     override fun register(
         authRequest: AuthRequest
@@ -32,13 +28,10 @@ class AuthServiceImpl(
             throw AuthException(AuthExceptionMessage.DUPLICATED_LOGIN, HttpStatus.CONFLICT)
         }
 
-        val userDetails = UserDetails(
-            login = authRequest.login,
-            password = passwordEncoder.encode(authRequest.password)
-        )
+        val userDetails = UserDetails(authRequest.login, passwordEncoder.encode(authRequest.password))
         val savedUserDetails = userDetailsRepository.save(userDetails)
         return AuthResponse(
-            jwtService.generateToken(savedUserDetails, Date(System.currentTimeMillis() + jwtProperties.accessTokenExpiration)),
+            jwtService.generateToken(savedUserDetails),
             //todo тут надо со временем уточнить моментики
             AuthResponseMessage.SUCCESS_REGISTRATION
         )
@@ -55,7 +48,7 @@ class AuthServiceImpl(
         }
 
         return AuthResponse(
-            jwtService.generateToken(userDetails, Date(System.currentTimeMillis() + jwtProperties.accessTokenExpiration)),
+            jwtService.generateToken(userDetails),
             AuthResponseMessage.SUCCESS_LOGIN
         )
     }

@@ -9,4 +9,6 @@ import java.util.*
 interface UserDetailsRepository: CrudRepository<UserDetails, Int> {
 
     fun findByLogin(login: String): Optional<UserDetails>
+
+    fun existsByLogin(login: String): Boolean
 }

@@ -40,19 +40,17 @@ class JwtAuthFilter(
             if (isEmpty) throw UserNotFoundException()
             get()
         }
-        if (SecurityContextHolder.getContext().authentication == null) {
-            val foundUser = userDetailsRepository.findById(id).orElseThrow { UserNotFoundException() }
-            if (jwtService.isValid(jwtToken, foundUser)) {
-                updateContext(foundUser, request)
-            } else {
-                throw UnauthorizedException()
-            }
-            filterChain.doFilter(request, response)
+        val foundUser = userDetailsRepository.findById(id).orElseThrow { UserNotFoundException() }
+        if (jwtService.isValid(jwtToken, foundUser)) {
+            updateContext(foundUser, request)
+        } else {
+            throw UnauthorizedException()
         }
+        filterChain.doFilter(request, response)
     }
 
     private fun updateContext(foundUser: UserDetails, request: HttpServletRequest) {
-        val authToken = UsernamePasswordAuthenticationToken(foundUser, null, foundUser.getAuthorities())
+        val authToken = UsernamePasswordAuthenticationToken(foundUser.id, null, foundUser.getAuthorities())
         authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
         SecurityContextHolder.getContext().authentication = authToken
     }

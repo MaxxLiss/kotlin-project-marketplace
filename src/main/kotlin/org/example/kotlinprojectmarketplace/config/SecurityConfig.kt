@@ -33,6 +33,7 @@ class SecurityConfig(
             it
                 .requestMatchers("error/").permitAll()
                 .requestMatchers(HttpMethod.POST, "api/auth/**").permitAll()
+                .requestMatchers("api/user/enrich/**").authenticated()
         }
         .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)

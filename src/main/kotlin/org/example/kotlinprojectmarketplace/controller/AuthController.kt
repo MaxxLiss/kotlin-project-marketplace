@@ -1,7 +1,7 @@
 package org.example.kotlinprojectmarketplace.controller
 
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthResponse
+import org.example.kotlinprojectmarketplace.database.dto.AuthRequest
+import org.example.kotlinprojectmarketplace.database.dto.AuthResponse
 import org.example.kotlinprojectmarketplace.service.AuthService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus

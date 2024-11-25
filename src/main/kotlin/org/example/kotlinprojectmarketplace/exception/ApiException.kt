@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 sealed class ApiException(
     override val message: String = "Something went wrong",
 
-    val statusCode: HttpStatus = HttpStatus.BAD_REQUEST,
+    val statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss[.SSS]")
     val happenedAt: LocalDateTime = LocalDateTime.now(),

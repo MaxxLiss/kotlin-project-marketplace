@@ -1,6 +1,6 @@
 package org.example.kotlinprojectmarketplace.service
 
-import org.example.kotlinprojectmarketplace.database.dto.auth.AuthRequest
+import org.example.kotlinprojectmarketplace.database.dto.AuthRequest
 import org.example.kotlinprojectmarketplace.database.entity.UserDetails
 import org.example.kotlinprojectmarketplace.database.repository.UserDetailsRepository
 import org.example.kotlinprojectmarketplace.exception.AuthException

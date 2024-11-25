@@ -1,4 +1,4 @@
-package org.example.kotlinprojectmarketplace.database.dto.auth
+package org.example.kotlinprojectmarketplace.database.dto
 
 data class AuthRequest(
     val login: String,

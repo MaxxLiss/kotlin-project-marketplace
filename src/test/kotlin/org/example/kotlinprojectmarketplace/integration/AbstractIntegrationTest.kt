@@ -13,11 +13,11 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 abstract class AbstractIntegrationTest {
     @Autowired
-    protected lateinit var mockMvc: MockMvc
+    protected final lateinit var mockMvc: MockMvc
 
     @Autowired
-    protected lateinit var objectMapper: ObjectMapper
+    protected final lateinit var objectMapper: ObjectMapper
 
     @Autowired
-    protected lateinit var passwordEncoder: BCryptPasswordEncoder
+    protected final lateinit var passwordEncoder: BCryptPasswordEncoder
 }

@@ -26,7 +26,9 @@ data class UserDetails (
     @Column(name = "admin", nullable = false)
     val admin: Boolean = false,
 ) {
-    fun getAuthorities(): MutableSet<GrantedAuthority> = mutableSetOf<GrantedAuthority>(Role.USER).apply {
+    constructor(login: String, password: String) : this(null, login, password)
+
+    fun getAuthorities(): MutableList<GrantedAuthority> = mutableListOf<GrantedAuthority>(Role.USER).apply {
         if (seller) add(Role.SELLER)
         if (admin) add(Role.ADMIN)
     }
