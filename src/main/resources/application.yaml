@@ -3,13 +3,25 @@ spring:
     name: kotlin-project-marketplace
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/kotlin_project_marketplace_db
-    name: postgres
+    url: jdbc:postgresql://localhost:5438/kotlin_project_marketplace_db
+    username: admin
     password: password
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
+      naming:
+          physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+    show-sql: true
 
 server:
   port: 8082
+
+jwt:
+  key: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+  access-token-expiration: 3600000 # 1 hour in milliseconds
